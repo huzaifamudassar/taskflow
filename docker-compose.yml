@@ -1,0 +1,42 @@
+services:
+  web:
+    build: .
+    image: taskflow-web:1.0
+    container_name: taskflow-web
+    ports:
+      - "80:5000"
+    environment:
+      DB_HOST: db
+      DB_NAME: taskdb
+      DB_USER: taskuser
+      DB_PASSWORD: taskpass
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - taskflow-net
+    restart: always
+
+  db:
+    image: postgres:15-alpine
+    container_name: taskflow-db
+    environment:
+      POSTGRES_DB: taskdb
+      POSTGRES_USER: taskuser
+      POSTGRES_PASSWORD: taskpass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - taskflow-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskuser -d taskdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+networks:
+  taskflow-net:
+
+volumes:
+  pgdata:
